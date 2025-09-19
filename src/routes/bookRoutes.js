@@ -3,28 +3,32 @@ import cloudinary from '../lib/cloudinary.js';
 import protectRoute from '../middleware/auth.js';
 import Book from '../models/Book.js';
 const router = express.Router();
-router.post("/",protectRoute, async (req,res)=>{
-    try{
-        const {title,caption,rating,image} = req.body;
-        if(!title||!caption||!rating||!image){
-            return res.status(400).json({message:"All fields are required"});
+router.post("/", protectRoute, async (req, res) => {
+    try {
+        const { title, caption, rating, image } = req.body;
+        if (!title || !caption || !rating || !image) {
+            return res.status(400).json({ message: "All fields are required" });
         }
-        //upload image to cloudinary
+        
+        // Upload image to cloudinary
         const uploadedResponse = await cloudinary.uploader.upload(image);
         const imageUrl = uploadedResponse.secure_url;
-       //save to db
-       const newBook ={
-        title,
-        caption,
-        rating,
-        image:imageUrl,
-        user:req.user.id,
-       }
-       await newBook.save()
-         res.status(201).json({message:"Book created successfully",book:newBook});
-    }catch(error){
+        
+        // Create and save to db using your Mongoose model
+        const newBook = new Book({  // Use 'new Book()' instead of plain object
+            title,
+            caption,
+            rating,
+            image: imageUrl,
+            user: req.user.id,
+        });
+        
+        await newBook.save();
+        res.status(201).json({ message: "Book created successfully", book: newBook });
+        
+    } catch (error) {
         console.log("Error in creating book:", error);
-        res.status(500).json({message:"Internal server error"});
+        res.status(500).json({ message: "Internal server error" });
     }
 });
 router.get("/",protectRoute,async(req,res)=>{
